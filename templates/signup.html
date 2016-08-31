@@ -1,0 +1,39 @@
+{% extends "blank.html" %}
+
+{% block content %}
+<div class="row">
+	<div class="col-md-4 col-md-offset-4">
+    	<div class="signup_panel panel panel-default">
+            <form method="post">
+    		<h1 class="text-center">Sign up!</h1>
+    		<br>
+    		<div class="form-group">
+    	        <label class="" for="username">Username</label>
+    	            <input class="form-control" data-placeholder="" id="username" name="username" type="text" value="">
+                    <div class="error">{{ error_username }}</div>
+            </div>
+
+    		<div class="form-group">
+    	        <label class="" for="username">Password</label>
+    	            <input class="form-control" data-placeholder="" id="password" name="password" type="password" value="">
+    	            <div class="error">{{ error_password }}</div>
+            </div>
+            <div class="form-group">
+                <label class="" for="username">Confirm password</label>
+                    <input class="form-control" data-placeholder="" id="verify" name="verify" type="password" value="">
+                    <div class="error">{{ error_verify }}</div>
+            </div>
+            <div class="form-group">
+                <label class="" for="username">Email (optional)</label>
+                    <input class="form-control" data-placeholder="" id="email" name="email" type="text" value="">
+                    <div class="error">{{ error_email }}</div>
+            </div>
+    	    <div class="text-center">
+    	    <input type="submit" class="btn btn-success" value="Sign up">
+    	    <br>
+            </div>
+    	    </div>
+    	</div>
+	</div>
+</div>
+{% endblock %}

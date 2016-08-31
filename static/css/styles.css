@@ -1,0 +1,152 @@
+.navbar { margin-bottom:0px !important; }
+
+body {
+	padding-top: 70px;
+	/* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+}
+
+html,
+body {
+	font-family: "Lato", sans-serif;
+	font-weight: 300;
+	color: #2d3c49;
+	max-width: 100%;
+}
+
+pre {
+	font-family: "Lato", sans-serif;
+	font-weight: 300;
+	font-size:15px;
+	border: none;
+	background-color:white;
+}
+
+h1 {
+	font-family: "Roboto Condensed", sans-serif;
+	margin-top: 0;
+	font-size:70px;
+}
+
+h4 {
+	font-family: "Roboto Condensed", sans-serif;
+	margin-top: 0;
+}
+
+.big_btn {
+	margin-right:5px;
+	font-family: "Lato", sans-serif;
+	border-radius: 10;
+}
+
+* {
+	border-radius: 0 !important;
+}
+
+a:hover {
+	text-decoration: none;
+	color: #2d3c49;
+}
+
+/* signup and login page styles */
+.login_panel {
+	margin-top:40px;
+	padding-top:30px; 
+	padding-left:50px; 
+	padding-right:50px; 
+	padding-bottom:50px;
+}
+
+.signup_panel {
+	width:400px;
+	margin-top:20px;
+	margin-left:auto;
+	margin-right:auto;
+	padding-top:20px; 
+	padding-left:50px; 
+	padding-right:50px; 
+	padding-bottom:40px;
+}
+
+.login_btn {
+	margin-top:-40px;
+	margin-bottom:20px;
+}
+
+.register_btn {
+	margin-top:30px;
+}
+
+/* thumbs up and thumbs down */
+#thumb:hover {
+	color: green;
+}
+
+#thumb_down:hover {
+	color: red;
+}
+
+.buttons {
+	text-decoration:underline;
+}
+
+.edit_comment_btn {
+	font-size:14px;
+	text-decoration:underline;
+	font-family: "Lato", sans-serif;
+}
+
+.delete_comment_btn {
+	font-size:14px;
+	text-decoration:underline;
+	font-family: "Lato", sans-serif;
+}
+
+/* error message style */
+.error {
+	color:red;
+}
+
+.thumb_spacer {
+	margin-left:10px;
+ }
+
+ .subject {
+ 	height: 50px;
+ }
+
+#like_label_perm, #unlike_label_perm,  #like_label,  #unlike_label {
+ 	margin-left:5px;
+ }
+
+ #like_label,  #unlike_label {
+ 	display:none;
+ }
+
+#votes {
+	margin-right:5px;
+}
+
+.post_btns {
+	margin-bottom:8px;
+}
+
+.post_header {
+	margin-bottom:8px;
+}
+
+.comment_input {
+	margin-bottom:20px;
+}
+
+#comment {
+	height:50px;
+}
+
+.new_post {
+	text-decoration:none;
+	color:white;
+}
+
+.new_post:hover {
+	color:white;
+}

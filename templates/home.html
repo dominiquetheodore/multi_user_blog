@@ -1,0 +1,44 @@
+{% extends "blank.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="caption text-center">
+        <h1>MultiUser Blog Project</h1>
+    </div>
+    <hr>
+</div>
+<br>
+<div class="row text-center">
+    <a class="btn-lg btn-success" href="/post">Write a post!</a>
+</div>
+<br><br>
+
+<div class="col-md-8" style="padding:0">
+    {% for post in posts %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4><a href="/blog/{{ post.permalink }}">{{ post.subject }}</a></h4>
+            <p>{{ post.username }} on {{ post.created.strftime('%b %d, %Y %H:%M') }}</p>
+        </div>
+        <div class="panel-body">
+            {% if post.content | length > 400 %}
+            <pre>  {{ post.content[:400] }}... </pre>
+            {% else %}
+            <pre> {{ post.content }} </pre>
+            {% endif %}
+            <a class="btn btn-info" href="/blog/{{ post.permalink }}">Read more...</a>
+        </div>
+        <div class="panel-footer clearfix">
+            <div class="pull-right">
+                <span class="fa fa-comment-o"></span> {{ post.comments(post.key().id()) }}
+                <span class="fa fa-thumbs-o-up thumb_spacer"></span> {{ post.likes(post.key().id()) }}
+                <span class="fa fa-thumbs-o-down thumb_spacer"></span> {{ post.unlikes(post.key().id()) }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<br>
+{% endblock %}
+   
