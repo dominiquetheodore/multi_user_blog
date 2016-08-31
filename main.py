@@ -112,8 +112,8 @@ class Post(db.Model):
     permalink = db.StringProperty()
 
     @classmethod
-    def by_id(cls, uid):
-        return Post.get_by_id(uid)
+    def by_id(cls, pid):
+        return Post.get_by_id(pid)
 
     @classmethod
     def has_voted(cls, uid, username):
@@ -124,16 +124,16 @@ class Post(db.Model):
             return None
 
     @classmethod
-    def likes(cls, uid):
-        return Like.count(str(uid))
+    def likes(cls, pid):
+        return Like.count(str(pid))
 
     @classmethod
-    def unlikes(cls, uid):
-        return Unlike.count(str(uid))
+    def unlikes(cls, pid):
+        return Unlike.count(str(pid))
 
     @classmethod
-    def comments(cls, uid):
-        return Comment.count(str(uid))
+    def comments(cls, pid):
+        return Comment.count(str(pid))
 
     @classmethod
     def has_unliked(cls, uid, username):
@@ -266,6 +266,7 @@ class Signup(BlogHandler):
 
         # redraw the signup page if user input is invalid
         if have_error:
+            params['page_type'] = "login"
             self.render("signup.html", **params)
         else:
             self.done()
