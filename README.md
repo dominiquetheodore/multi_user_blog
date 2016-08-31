@@ -1,6 +1,9 @@
 ## Multiuser Blog Project
 submission for P4 of Udacity Full-Stack Web Developer nanodegree.
 
+You can try the live version at:
+[http://www.multiblog-142015.appspot.com/blog](http://www.multiblog-142015.appspot.com/blog)
+
 ## About 
 This multiuser blog lets you write and comment posts, as well as like and unlike. 
 
