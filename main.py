@@ -298,7 +298,7 @@ class Login(BlogHandler):
             self.login(u)
             self.redirect('/blog')
         else:
-            self.render("login.html", error_msg="invalid login")
+            self.render("login.html", page_type="login", error_msg="invalid login")
 
 
 class Blog(BlogHandler):
