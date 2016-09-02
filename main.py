@@ -1,15 +1,14 @@
 import webapp2
 import os
 import jinja2
-import re
-import hashlib
 import json
-import hmac
-import random
-from string import ascii_lowercase
-from google.appengine.ext import db
 
-SECRET = "thisisreallysecret"
+# database classes
+from user import *
+from comment import *
+from post import *
+from like import *
+from unlike import *
 
 # set up the Jinja environment
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -17,186 +16,8 @@ jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
 
 
-def make_salt():
-    """ returns a string of 5 random characters """
-    salt = []
-    s = ""
-    for i in range(0, 5):
-        salt.append(random.choice(ascii_lowercase))
-    return s.join(salt)
-
-
-def users_key(group='default'):
-    return db.Key.from_path('users', group)
-
-
-def posts_key(group='default'):
-    return db.Key.from_path('posts', group)
-
-
-def make_pw_hash(name, pw, salt=None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (h, salt)
-
-
-def valid_pw(name, pw, h):
-    salt = h.split(",")[1]
-    h0 = make_pw_hash(name, pw, salt)
-    return h == h0
-
-
-def valid_username(username):
-    USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-    return username and USER_RE.match(username)
-
-
-def valid_password(password):
-    PASSWORD_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-    return password and PASSWORD_RE.match(password)
-
-
-def valid_email(email):
-    if email == "":
-        return True
-    else:
-        EMAIL_RE = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-        return email and EMAIL_RE.match(email)
-
-
-def make_secure_val(val):
-    return '%s|%s' % (val, hmac.new(SECRET, val).hexdigest())
-
-
-def check_secure_val(secure_val):
-    val = secure_val.split('|')[0]
-    if secure_val == make_secure_val(val):
-        return val
-
-
-class User(db.Model):
-    name = db.StringProperty(required=True)
-    pw_hash = db.StringProperty(required=True)
-    email = db.StringProperty()
-
-    @classmethod
-    def by_id(cls, uid):
-        return User.get_by_id(uid, parent=users_key())
-
-    @classmethod
-    def by_name(cls, name):
-        u = User.all().filter('name =', name).get()
-        return u
-
-    @classmethod
-    def register(cls, name, pw, email=None):
-        pw_hash = make_pw_hash(name, pw)
-        return User(parent=users_key(),
-                    name=name,
-                    pw_hash=pw_hash,
-                    email=email)
-
-    @classmethod
-    def login(cls, name, pw):
-        u = cls.by_name(name)
-        if u and valid_pw(name, pw, u.pw_hash):
-            return u
-
-
-class Post(db.Model):
-    username = db.StringProperty(required=True)
-    subject = db.TextProperty(required=True)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    permalink = db.StringProperty()
-
-    @classmethod
-    def by_id(cls, pid):
-        return Post.get_by_id(pid)
-
-    @classmethod
-    def has_voted(cls, uid, username):
-        l = Like(username=username, post_id=str(uid))
-        if l.by_id(username, str(uid)):
-            return "found"
-        else:
-            return None
-
-    @classmethod
-    def likes(cls, pid):
-        return Like.count(str(pid))
-
-    @classmethod
-    def unlikes(cls, pid):
-        return Unlike.count(str(pid))
-
-    @classmethod
-    def comments(cls, pid):
-        return Comment.count(str(pid))
-
-    @classmethod
-    def has_unliked(cls, uid, username):
-        u = Unlike(username=username, post_id=str(uid))
-        if u.by_id(username, str(uid)):
-            return "found"
-        else:
-            return None
-
-
-class Comment(db.Model):
-    username = db.StringProperty(required=True)
-    comment = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    post_id = db.StringProperty(required=True)
-
-    @classmethod
-    def count(cls, post_id):
-        """ return number of comments for a given post_id """
-        cnt = Comment.all().filter('post_id =', post_id).count()
-        return cnt
-
-    @classmethod
-    def by_id(cls, cid):
-        return Comment.get_by_id(cid)
-
-    @classmethod
-    def by_post(cls, pid):
-        print "you are here"
-        return Comment.all().filter('post_id =', str(pid)).order('-created')
-
-
-class Like(db.Model):
-    username = db.StringProperty(required=True)
-    post_id = db.StringProperty(required=True)
-
-    @classmethod
-    def by_id(cls, name, post_id):
-        u = Like.all().filter('username =', name).filter('post_id =', post_id).get()
-        return u
-
-    @classmethod
-    def count(cls, post_id):
-        cnt = Like.all().filter('post_id =', post_id).count()
-        return cnt
-
-
-class Unlike(db.Model):
-    username = db.StringProperty(required=True)
-    post_id = db.StringProperty(required=True)
-
-    @classmethod
-    def by_id(cls, name, post_id):
-        u = Unlike.all().filter('username =', name).filter('post_id =', post_id).get()
-        return u
-
-    @classmethod
-    def count(cls, post_id):
-        cnt = Unlike.all().filter('post_id =', post_id).count()
-        return cnt
-
-
 class BlogHandler(webapp2.RequestHandler):
+
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
@@ -230,6 +51,7 @@ class BlogHandler(webapp2.RequestHandler):
 
 
 class Signup(BlogHandler):
+
     def get(self):
         self.render("signup.html", page_type="login")
 
@@ -276,6 +98,7 @@ class Signup(BlogHandler):
 
 
 class Register(Signup):
+
     def done(self):
         u = User.register(self.username, self.password, self.email)
         u.put()
@@ -284,7 +107,8 @@ class Register(Signup):
 
 
 class Login(BlogHandler):
-    """ display login page and redirect to the blog if valid details are entered """
+
+    """ display login page and redirect to the blog if user valid """
 
     def get(self):
         self.render("login.html", page_type="login")
@@ -298,10 +122,12 @@ class Login(BlogHandler):
             self.login(u)
             self.redirect('/blog')
         else:
-            self.render("login.html", page_type="login", error_msg="invalid login")
+            self.render(
+                "login.html", page_type="login", error_msg="invalid login")
 
 
 class Blog(BlogHandler):
+
     """ displays blog front: pass username if logged in """
 
     def get(self):
@@ -313,6 +139,7 @@ class Blog(BlogHandler):
 
 
 class Logout(BlogHandler):
+
     """ display logout page """
 
     def get(self):
@@ -321,6 +148,7 @@ class Logout(BlogHandler):
 
 
 class NewPost(BlogHandler):
+
     """ create a new post """
 
     def get(self):
@@ -334,20 +162,25 @@ class NewPost(BlogHandler):
         self.subject = self.request.get("subject")
         self.content = self.request.get("content")
 
-        if self.subject and self.content:
-            p = Post(username=self.username,
-                     subject=self.subject, content=self.content)
-            p.put()
-            p_key = p.key().id()
-            p.permalink = str(p_key)
-            p.put()
-            self.redirect("/blog/%s" % p_key)
+        # only authenticated users can post
+        if self.user:
+            if self.subject and self.content:
+                p = Post(username=self.username,
+                         subject=self.subject, content=self.content)
+                p.put()
+                p_key = p.key().id()
+                p.permalink = str(p_key)
+                p.put()
+                self.redirect("/blog/%s" % p_key)
+            else:
+                self.render("new.html", username=self.username,
+                            error_msg="both subject and content required")
         else:
-            self.render("new.html", username=self.username,
-                        error_msg="both subject and content required")
+            self.write("Please log in to post")
 
 
 class Entry(BlogHandler):
+
     """ displays a single post """
 
     def get(self, post_id):
@@ -357,19 +190,26 @@ class Entry(BlogHandler):
             cnt_likes = Like.count(post_id)
             cnt_unlikes = Unlike.count(post_id)
             cnt_comments = Comment.count(post_id)
+            params = dict(post=post, comments=comments)
+            params['votes'] = str(cnt_likes)
+            params['unlikes'] = str(cnt_unlikes)
+            params['num_comments'] = str(cnt_comments)
             if self.user:
                 has_voted = Post.has_voted(post_id, self.user.name)
                 has_unliked = Post.has_unliked(post_id, self.user.name)
-                self.render("post.html", username=self.user.name, post=post, has_voted=has_voted, has_unliked=has_unliked,
-                            comments=comments, votes=str(cnt_likes), unlikes=str(cnt_unlikes), num_comments=str(cnt_comments))
+                params['username'] = self.user.name
+                params['has_voted'] = has_voted
+                params['has_unliked'] = has_unliked
+                self.render("post.html", **params)
             else:
-                self.render("post.html", post=post, comments=comments,
-                            votes=str(cnt_likes), unlikes=str(cnt_unlikes), num_comments=str(cnt_comments))
+                self.render("post.html", **params)
         else:
+            # post not found
             self.redirect('/404')
 
 
 class HasVoted(BlogHandler):
+
     """ check if user has liked a post """
 
     def post(self):
@@ -383,13 +223,15 @@ class HasVoted(BlogHandler):
                 existing = l.by_id(self.user.name, post_id)
                 if existing:
                     self.response.out.write(json.dumps(
-                        ({'error': "You have already voted!"}, {'has_voted': "You have already voted!"})))
+                        ({'error': "You have already voted!"},
+                            {'has_voted': "You have already voted!"})))
         else:
             self.response.out.write(json.dumps(
                 ({'error': "Please log in to vote!"})))
 
 
 class HasUnliked(BlogHandler):
+
     """ check if user has downvoted a post """
 
     def post(self):
@@ -406,6 +248,7 @@ class HasUnliked(BlogHandler):
 
 
 class Vote(BlogHandler):
+
     """ thumbs up to a post """
 
     def post(self):
@@ -444,6 +287,7 @@ class Vote(BlogHandler):
 
 
 class Unlike_post(BlogHandler):
+
     """ downvote a post """
 
     def post(self):
@@ -481,38 +325,67 @@ class Unlike_post(BlogHandler):
 
 
 class Edit(BlogHandler):
+
     """ edit a post """
 
     def post(self):
-        post_id = self.request.get("post_id")
-        subject = self.request.get("subject")
-        content = self.request.get("content")
-        # only store if subject and content is found
-        if subject and content:
-            p = Post.by_id(int(post_id))
-            p.subject = subject
-            p.content = content
-            p.put()
-            self.response.out.write(json.dumps(
-                ({'message': "Your edit was saved successfully."})))
+        if self.user:
+            post_id = self.request.get("post_id")
+            subject = self.request.get("subject")
+            content = self.request.get("content")
+
+            # only store if subject and content is found
+            if subject and content:
+                p = Post.by_id(int(post_id))
+                p.subject = subject
+                p.content = content
+
+                # check if user is authorized to edit this post
+                if p.username == self.user.name:
+                    p.put()
+                    self.response.out.write(json.dumps(
+                        ({'message': "Your edit was saved successfully."})))
+                else:
+                    error_msg = "You are not allowed to edit this post."
+                    self.response.out.write(json.dumps(
+                        ({'error': error_msg})))
+            else:
+                self.response.out.write(json.dumps(
+                    ({'error': "both subject and content required!"})))
         else:
             self.response.out.write(json.dumps(
-                ({'error': "both subject and content required!"})))
+                ({'error': "Please login to edit a post"})))
 
 
 class Delete(BlogHandler):
+
     """ delete posts given ID """
 
     def post(self):
-        post_id = self.request.get("post_id")
-        p = Post.by_id(int(post_id))
-        p.delete()
-        self.response.out.write(json.dumps(
-            ({'message': "Your post was deleted successfully. Redirecting to the home page..."})))
+        if self.user:
+            post_id = self.request.get("post_id")
+            p = Post.by_id(int(post_id))
+            p.delete()
+
+            # check if the user is authorised to delete the post
+            if p.username == self.user.name:
+                message = "Your post was deleted successfully."\
+                    "Redirecting to the home page..."
+                self.response.out.write(json.dumps(
+                    ({'message': message})))
+            else:
+                error_msg = "You are not authorized to delete this post"
+                self.response.out.write(json.dumps(
+                    ({'error': error_msg})))
+        else:
+            self.response.out.write(json.dumps(
+                ({'error': "Please login to delete a post"})))
 
 
 class CommentbyID(BlogHandler):
+
     """ return comment by ID """
+    """ no need for authentication """
 
     def post(self):
         comment_id = self.request.get("comment_id")
@@ -522,52 +395,85 @@ class CommentbyID(BlogHandler):
 
 
 class CommentPage(BlogHandler):
+
     """ add comment given post_id """
 
     def post(self):
         comment = self.request.get("comment")
         post_id = self.request.get("post_id")
+        message = "Your comment was saved successfully. Page will reload..."
 
-        if comment:
-            c = Comment(username=self.user.name,
-                        comment=comment, post_id=post_id)
-            c.put()
-            self.response.out.write(json.dumps(
-                ({'message': "Your comment was saved successfully. Page will reload..."})))
+        if self.user:
+            # ensure comment is not blank
+            if comment:
+                c = Comment(username=self.user.name,
+                            comment=comment, post_id=post_id)
+                c.put()
+                self.response.out.write(json.dumps(
+                    ({'message': message})))
+            else:
+                self.response.out.write(json.dumps(
+                    ({'error': "Comment is required"})))
         else:
             self.response.out.write(json.dumps(
-                ({'error': "Comment is required"})))
+                ({'error': "Please login to post a comment"})))
 
 
 class EditComment(BlogHandler):
+
     """ edit comment given ID (post requests only) """
 
     def post(self):
-        comment_id = self.request.get("comment_id")
-        comment = self.request.get("comment")
-        if comment:
-            c = Comment.by_id(int(comment_id))
-            c.comment = comment
-            c.put()
-            self.response.out.write(json.dumps(
-                ({'message': "Your comment was edited successfully."})))
+        # user must be logged on to edit a comment
+        if self.user:
+            comment_id = self.request.get("comment_id")
+            comment = self.request.get("comment")
+            if comment:
+                c = Comment.by_id(int(comment_id))
+                # check if user is authorized to edit the comment
+                if c.username == self.user.name:
+                    c.comment = comment
+                    c.put()
+                    message = "Your comment was edited successfully."
+                    self.response.out.write(json.dumps(
+                        ({'message': message})))
+                else:
+                    message = "You are not authorized to edit this comment"
+                    self.response.out.write(json.dumps(
+                        ({'message': message})))
+            else:
+                self.response.out.write(json.dumps(
+                    ({'error': "comment is required!"})))
         else:
             self.response.out.write(json.dumps(
-                ({'error': "comment is required!"})))
+                ({'error': "Please login to edit a comment"})))
 
 
 class DeleteComment(BlogHandler):
+
     """ delete comment given ID (post requests only) """
 
     def post(self):
-        comment_id = self.request.get("comment_id")
-        c = Comment.by_id(int(comment_id))
-        c.delete()
-        self.response.out.write(json.dumps(
-            ({'message': "Your comment was deleted successfully..."})))
+        # user must be logged on to delete a comment
+        if self.user:
+            comment_id = self.request.get("comment_id")
+            c = Comment.by_id(int(comment_id))
+
+            # check if user is authorized to delete the comment
+            if c.username == self.user.name:
+                c.delete()
+                self.response.out.write(json.dumps(
+                    ({'message': "Your comment was deleted successfully..."})))
+            else:
+                self.response.out.write(json.dumps(
+                    ({'error': "You are not allowed to delete this comment"})))
+        else:
+            self.response.out.write(json.dumps(
+                ({'error': "Please login to delete a comment"})))
 
 
 class NotFound(BlogHandler):
+
     """" page not found """
 
     def get(self):
